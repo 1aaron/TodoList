@@ -18,6 +18,7 @@ package com.example.android.todolist
 
 import android.content.Intent
 import android.os.Bundle
+import android.util.Log
 import androidx.appcompat.app.AppCompatActivity
 import androidx.recyclerview.widget.DividerItemDecoration
 import androidx.recyclerview.widget.ItemTouchHelper
@@ -64,7 +65,18 @@ class MainActivity : AppCompatActivity(), TaskAdapter.ItemClickListener {
 
             // Called when a user swipes left or right on a ViewHolder
             override fun onSwiped(viewHolder: RecyclerView.ViewHolder, swipeDir: Int) {
-                // Here is where you'll implement swipe to delete
+                AppExecutors.getInstance().diskIO.execute {
+                    kotlin.run {
+                        val position = viewHolder.adapterPosition
+                        Log.e("TAG",position.toString())
+                        val task = mAdapter?.getTasks()?.get(position)
+                        task?.let {
+                            Log.e("TAG",task.description)
+                            mDb.taskDao().deleteTask(it)
+                            retrieveTasks()
+                        }
+                    }
+                }
             }
         }).attachToRecyclerView(mRecyclerView)
 
@@ -84,13 +96,17 @@ class MainActivity : AppCompatActivity(), TaskAdapter.ItemClickListener {
 
     override fun onResume() {
         super.onResume()
+        retrieveTasks()
+    }
+
+    fun retrieveTasks(){
         mAdapter?.let {
             AppExecutors.getInstance().diskIO.execute { kotlin.run {
-                    val tasks = mDb.taskDao().loadAllTasks()
-                    runOnUiThread {
-                        it.setTasks(tasks)
-                    }
+                val tasks = mDb.taskDao().loadAllTasks()
+                runOnUiThread {
+                    it.setTasks(tasks)
                 }
+            }
             }
         }
     }

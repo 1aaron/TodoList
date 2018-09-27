@@ -115,6 +115,10 @@ class TaskAdapter(val mContext: Context, val mItemClickListener: ItemClickListen
         notifyDataSetChanged()
     }
 
+    fun getTasks() : List<TaskEntry>? {
+        return mTaskEntries
+    }
+
     interface ItemClickListener {
         fun onItemClickListener(itemId: Int)
     }
